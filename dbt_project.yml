@@ -1,0 +1,98 @@
+# -----------------------
+# Project Details
+# -----------------------
+# Name your project! Project names should contain only lowercase characters
+# and underscores. A good package name should reflect your organization's
+# name or the intended use of these models
+name: mcb_dbt
+
+config-version: 2
+version: '1.0.0'
+
+# -----------------------
+# Default Profile
+# -----------------------
+# This setting configures which "profile" dbt uses for this project.
+profile: default
+
+# -----------------------
+# File Paths
+# -----------------------
+# These configurations specify where dbt should look for different types of files.
+# The `source-paths` config, for example, states that models in this project can be
+# found in the "models/" directory. You probably won't need to change these!
+model-paths: ["models"]
+analysis-paths: ["analysis"]
+test-paths: ["tests"]
+seed-paths: ["seeds"]
+macro-paths: ["macros"]
+snapshot-paths: ["snapshots"]
+
+# -----------------------
+# Internals
+# -----------------------
+target-path: "target"  # directory which will store compiled SQL files
+log-path: "logs"
+packages-install-path: "dbt_packages"
+
+clean-targets:         # directories to be removed by `dbt clean`
+  - "target"
+  - "dbt_modules"
+  - "dbt_packages"
+
+require-dbt-version: ">=1.5.0"
+
+#-----------------------------
+# Project Variables
+#-----------------------------
+vars:
+ project_database_prefix: 'dw'
+ tfr_date: '2023-05-24'
+
+# Database names have form '<project_database_prefix>_<target.name>_<stage of processing>', for example, 'dw_dev_clean'
+ database_list: ['ingest', 'clean', 'normalize', 'integrate', 'analyze', 'egest', 'report']
+
+# Configuring models
+# Full documentation: https://docs.getdbt.com/docs/configuring-models
+tests:
+  +store_failures: true
+  +limit: 100
+  +severity: error
+  +database: "dw_{{ target.name }}_ingest"
+  +schema: 'dbt_test_results'
+
+
+models:
+  +transient: true # create tables as TRANSIENT or PERMANENT (default if missing is 'transient: true')
+
+  # Add "description" from schema.yml as COMMENT to table and columns in Snowflake
+  #  CAUTION: having `columns: true` seems to break the deployment for columns that need to be quoted e.g. "F+F Core SKU"
+  #  MUST turn off column comments (columns: false) if you have columns that need quotes on any models.
+  #  BEST PARCTICE: avoid, if possible, using column names that need quotes e.g. "F+F Core SKU" >> ff_core_sku
+  +persist_docs:
+    relation: true # enables snowflake COMMENT on TABLES and VIEWS
+    columns: true  # enables snowflake COMMENT on COLUMNS for TABLES only! Doesn't work for snowflake VIEWS!
+
+  mcb_dbt: # !!! make sure to use the exact spelling from the 'name:' at the top of this file
+    # Applies to all files under 'models/*'
+    +materialized: view # Materialization is view by default, override in model's config block
+
+    ingest:
+      +database: "ingest"
+
+    clean:
+      +database: "clean"
+
+    normalize:
+      +database: "normalize"
+
+    integrate:
+      +database: "integrate"
+
+    analyze:
+      +database: "analyze"
+
+    report:
+      +database: "report"
+
+seeds:

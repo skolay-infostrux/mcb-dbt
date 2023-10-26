@@ -1,0 +1,35 @@
+[sqlfluff]
+dialect = snowflake
+templater = dbt
+# Exclude the following rules:
+    # L031: Avoid table aliases in from clauses and join conditions
+    # L034: Select wildcards then simple targets before calculations and aggregates.
+    # L057: Do not use special characters in identifiers. (We want to allow spaces in the reporting layer)
+exclude_rules = L031, L034, L057
+
+[sqlfluff:templater:dbt]
+# Default profiles.yml directory is ~/.dbt/
+profiles_dir = ./
+project_dir = ./
+
+# Default SQLFluff configuraiton rules are listed here
+# https://docs.sqlfluff.com/en/stable/configuration.html#default-configuration
+
+[sqlfluff:rules]
+max_line_length = 100
+
+[sqlfluff:rules:L010]
+# Keywords
+capitalisation_policy = upper
+
+[sqlfluff:rules:L014]
+# Unquoted identifiers
+extended_capitalisation_policy = lower
+
+[sqlfluff:rules:L030]
+# Function names
+capitalisation_policy = upper
+
+[sqlfluff:rules:L040]
+# Null & Boolean Literals
+capitalisation_policy = upper
