@@ -64,7 +64,7 @@ The `.env` file is automatically loaded when the container [`(.venv)` | `(.docke
     > # SNOWFLAKE credentials
     > export DBT_SNOWFLAKE_ACCOUNT=$(cat "${HOME}/.ssh/snowflake.account")
     > export DBT_SNOWFLAKE_USER=$(cat "${HOME}/.ssh/snowflake.username")
-    > export DBT_SNOWFLAKE_PASSWORD="${HOME}/.ssh/snowflake.password"
+    > export DBT_SNOWFLAKE_PASSWORD=$(cat "{HOME}/.ssh/snowflake.password")
     >  ```
     ***Hint:** You can avoid having the credentials in clear in the `.env` by redirecting to files in the secure folder `${HOME}/.ssh/` .*
 
