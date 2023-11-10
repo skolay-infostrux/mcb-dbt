@@ -1,0 +1,38 @@
+name: Manual Deployment
+on:
+  workflow_dispatch: # Controls when the action will run.
+    secrets:
+      checkout_token:
+        description: 'A token passed from the caller workflow'
+        required: true
+    paths-ignore:
+      - 'docs/**'
+      - '.github/**'
+    inputs:
+      dbt_profile_target:
+        description: 'Choose the environment to deploy to'
+        required: true
+        default: 'dev'
+        type: choice
+        options:
+          - dev
+          - uat
+          - prod
+      full_refresh:
+        description: "Do '--full-refresh' when deploying"
+        required: false
+        default: false
+        type: boolean
+jobs:
+  dbt-deploy:
+    name: 'Manual dbt Deployment Pipeline - ${{ inputs.dbt_profile_target }}'
+    uses: ./.github/workflows/dbt-deploy.yml
+    with:
+      environment: ${{ inputs.dbt_profile_target }}
+      full_refresh: ${{ inputs.full_refresh }}
+
+      dbt_profile_target: ${{ inputs.dbt_profile_target }}
+      dbt_snowflake_role: ACCOUNTADMIN
+      dbt_snowflake_warehouse: ${{ inputs.dbt_profile_target }}_DBT_WH
+      dbt_snowflake_database: DW_${{ inputs.dbt_profile_target }}_CLEAN
+      dbt_snowflake_schema: PUBLIC
