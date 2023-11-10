@@ -16,7 +16,7 @@ jobs:
       dbt_profile_target: dev
       dbt_snowflake_role: ACCOUNTADMIN
       dbt_snowflake_warehouse: COMPUTE_WH
-      dbt_snowflake_database: DW_DEV_INGEST
+      dbt_snowflake_database: DW_DEV_CLEAN
       dbt_snowflake_schema: PUBLIC
 
     secrets:
