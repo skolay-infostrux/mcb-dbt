@@ -1,0 +1,110 @@
+name: Manual dbt seed <ENV>
+
+# Controls when the action will run. Workflow runs when manually triggered using the UI
+# or API.
+on:
+  workflow_dispatch: # Controls when the action will run.
+    inputs:
+      dbt_profile_target:
+        description: 'Profile target (from profiles.yml)'
+        required: true
+        default: 'dev'
+        type: choice
+        options:
+          - dev
+          - uat
+          - prod
+
+      full_refresh_option:
+        description: 'Execute "dbt seed [--full-refresh]" ?'
+        required: false
+        type: choice
+        options:
+          - ''
+          - '--full-refresh'
+
+      dbt_snowflake_role:
+        required: true
+        type: choice
+        default: SYSADMIN
+        options:
+          - SYSADMIN
+          - ENV_ADMIN_ROLE
+      dbt_snowflake_warehouse:
+        required: true
+        type: choice
+        default: COMPUTE_WH
+        options:
+          - COMPUTE_WH
+          - DEV_DBT_WH
+      dbt_snowflake_database:
+        required: true
+        default: DW_DEV_INGEST
+        type: string
+      dbt_snowflake_schema:
+        required: false
+        default: PUBLIC
+        type: string
+
+      python_version:
+        required: false
+        default: '3.10.4'
+        type: string
+jobs:
+  dbt-ci:
+    name: 'SEED profile target: ${{ inputs.dbt_profile_target }}'
+    runs-on: ubuntu-latest
+    env:
+      dbt_profile_target:  ${{ inputs.dbt_profile_target }}
+      DBT_SNOWFLAKE_ACCOUNT: ${{ secrets.dbt_snowflake_account }}
+      DBT_SNOWFLAKE_USER: ${{ secrets.dbt_snowflake_user }}
+      DBT_SNOWFLAKE_PASSWORD: ${{ secrets.dbt_snowflake_password }}
+      DBT_SNOWFLAKE_ROLE: ${{ inputs.dbt_snowflake_role }}
+      DBT_SNOWFLAKE_WAREHOUSE: ${{ inputs.dbt_snowflake_warehouse }}
+      DBT_SNOWFLAKE_DATABASE: ${{ inputs.dbt_snowflake_database }}
+      DBT_SNOWFLAKE_SCHEMA: ${{ inputs.dbt_snowflake_schema }}
+      DBT_PROFILES_DIR: ${{ github.workspace }}
+    steps:
+      - name: Show parameters
+        run: |
+          echo "Profile target  : ${{ inputs.dbt_profile_target}}"
+          echo "--full-refresh: ${{ inputs.full_refresh_option}}"
+
+          set | grep ^DBT_SNOWFLAKE_
+
+      - name: Checkout code
+        uses: actions/checkout@v3
+
+      # >>>> Python env
+      - name: Setup Python ${{ inputs.python_version }}
+        uses: actions/setup-python@v3
+        with:
+          python-version: ${{ inputs.python_version }}
+
+      - name: Cache Python Dependencies
+        id: pip-cache
+        uses: actions/cache@v3
+        with:
+          path: ~/.cache/pip
+          key: ${{ runner.os }}-pip-${{ hashFiles('**/requirements.txt') }}
+          restore-keys: |
+            ${{ runner.os }}-pip-
+
+      - name: Install Python Dependencies
+        run: |
+          python -m pip install --upgrade pip
+          [ -f requirements.txt ] && pip install -r requirements.txt
+      # <<<< Python env
+
+      - name: Pull in dbt Dependencies
+        run: |
+          dbt deps
+
+      - name: Test dbt Snowflake Connection
+        run: |
+          dbt debug --target ${{ inputs.dbt_profile_target }}
+
+
+      - name: Seed
+        run: |
+          dbt seed --target ${{ inputs.dbt_profile_target }} ${{ inputs.full_refresh_option }}
