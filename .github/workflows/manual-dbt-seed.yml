@@ -54,6 +54,7 @@ jobs:
   dbt-ci:
     name: 'SEED profile target: ${{ inputs.dbt_profile_target }}'
     runs-on: ubuntu-latest
+    environment: ${{ inputs.dbt_profile_target }}
     env:
       dbt_profile_target:  ${{ inputs.dbt_profile_target }}
       DBT_SNOWFLAKE_ACCOUNT: ${{ secrets.dbt_snowflake_account }}
