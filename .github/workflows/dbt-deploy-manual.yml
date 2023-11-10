@@ -16,7 +16,7 @@ on:
         type: choice
         options:
           - dev
-          - UAT
+          - uat
           - prod
       full_refresh:
         description: "Do '--full-refresh' when deploying"
