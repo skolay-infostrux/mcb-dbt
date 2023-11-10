@@ -59,6 +59,13 @@ jobs:
     steps:
       - uses: actions/checkout@v3
 
+      - name: Show parameters
+        run: |
+          echo "Profile target  : ${{ inputs.dbt_profile_target}}"
+          echo "--full-refresh: ${{ inputs.full_refresh_option}}"
+
+          set | grep ^DBT_SNOWFLAKE_
+
       # >>>> Python env
       - name: Setup Python ${{ inputs.python_version }}
         uses: actions/setup-python@v3
