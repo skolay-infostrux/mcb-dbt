@@ -1,0 +1,156 @@
+name: _template dbt CI Pipeline
+on:
+  workflow_call:
+    inputs:
+      environment:
+        required: true
+        default: 'dev'
+        type: string
+      dbt_profile_target:
+        required: true
+        default: 'dev'
+        type: string
+      full_refresh:
+        required: false
+        default: false
+        type: boolean
+      perform_onetime_seeding:
+        required: false
+        default: false
+        type: boolean
+      generate_docs:
+        required: false
+        default: true
+        type: boolean
+
+      dbt_snowflake_role:
+        required: true
+        type: string
+      dbt_snowflake_warehouse:
+        required: true
+        type: string
+      dbt_snowflake_database:
+        required: true
+        type: string
+      dbt_snowflake_schema:
+        required: false
+        default: PUBLIC
+        type: string
+
+      python_version:
+        required: false
+        default: '3.10.4'
+        type: string
+
+    secrets:
+      dbt_snowflake_account:
+        required: true
+      dbt_snowflake_user:
+        required: true
+      dbt_snowflake_password:
+        required: true
+      checkout_token:
+        required: true
+
+jobs:
+  dbt-ci:
+    name: 'Build / ${{ inputs.environment }}'
+    runs-on: ubuntu-latest
+    env:
+      DBT_SNOWFLAKE_ACCOUNT: ${{ secrets.dbt_snowflake_account }}
+      DBT_SNOWFLAKE_USER: ${{ secrets.dbt_snowflake_user }}
+      DBT_SNOWFLAKE_PASSWORD: ${{ secrets.dbt_snowflake_password }}
+      DBT_SNOWFLAKE_ROLE: ${{ inputs.dbt_snowflake_role }}
+      DBT_SNOWFLAKE_WAREHOUSE: ${{ inputs.dbt_snowflake_warehouse }}
+      DBT_SNOWFLAKE_DATABASE: ${{ inputs.dbt_snowflake_database }}
+      DBT_SNOWFLAKE_SCHEMA: ${{ inputs.dbt_snowflake_schema }}
+      DBT_PROFILES_DIR: ${{ github.workspace }}
+
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v3
+        with:
+          ref: ${{ github.event.pull_request.head.ref }}
+          token: ${{ secrets.checkout_token }}
+
+      # >>>> Python env
+      - name: Setup Python ${{ inputs.python_version }}
+        uses: actions/setup-python@v3
+        with:
+          python-version: ${{ inputs.python_version }}
+
+      - name: Cache Python Dependencies
+        id: pip-cache
+        uses: actions/cache@v3
+        with:
+          path: ~/.cache/pip
+          key: ${{ runner.os }}-pip-${{ hashFiles('**/requirements.txt') }}
+          restore-keys: |
+            ${{ runner.os }}-pip-
+
+      - name: Install Python Dependencies
+        run: |
+          python -m pip install --upgrade pip
+          [ -f requirements.txt ] && pip install -r requirements.txt
+      # <<<< Python env
+
+      - name: Run Pre-Commit on All Files
+        run: |
+          pre-commit run --all-files --verbose || :  # Continue regardless of return value of pre-commit
+          pre-commit run --all-files  # again after the fix by pre-commit
+
+      - name: Pull in dbt Dependencies
+        run: |
+          dbt deps
+
+      - name: Test dbt Snowflake Connection
+        run: |
+          dbt debug --target ${{ inputs.dbt_profile_target }}
+
+      - name: Download dbt Artifacts
+        id: download_artifacts
+        uses: dawidd6/action-download-artifact@v2
+        with:
+          workflow: 'dbt-deploy-${{ inputs.environment }}.yml'
+          path: target-deferred
+        continue-on-error: true
+
+      - name: Move dbt Artifacts to Target Directory
+        if: steps.download_artifacts.outcome == 'success'
+        run: |
+          mv target-deferred/**/*.json target-deferred
+
+      - name: Get Deferred State
+        run: |
+          if [ -f target-deferred/manifest.json ]; then
+            echo "DBT_FLAGS=--defer --state target-deferred/ --select +state:modified" >> $GITHUB_ENV
+          fi
+
+      # 'dbt build' does seed+run+test
+      # we want only run+test >>> exclude CSV files in the 'seed' folder
+      - name: Build
+        if: ${{ !inputs.full_refresh }}
+        run: |
+          dbt build $DBT_FLAGS --target ${{ inputs.dbt_profile_target }} --exclude seeds/*.csv seeds/*/*.csv
+      - name: Build (Full Refresh)
+        if: ${{ inputs.full_refresh }}
+        run: |
+          dbt build $DBT_FLAGS --full-refresh --target ${{ inputs.dbt_profile_target }} --exclude seeds/*.csv seeds/*/*.csv
+
+
+      - name: Generate dbt Docs
+        if: ${{ inputs.generate_docs }}
+        run: |
+          rm -rf target*/
+          dbt docs generate --target ${{ inputs.dbt_profile_target }}
+          mv target/ docs/
+
+      - name: Commit dbt Docs
+        run: |
+          git config user.name "${GITHUB_ACTOR}"
+          git config user.email "${GITHUB_ACTOR}@users.noreply.github.com"
+          git add .
+          git diff-index --quiet HEAD || git commit -m "dbt-docs: Update dbt docs"
+          git config --list
+          git push
