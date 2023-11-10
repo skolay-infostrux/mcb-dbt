@@ -1,0 +1,31 @@
+name: Develop CI Pipeline
+on:
+  push:
+    branches: [ "main" ]
+  pull_request:
+    branches: [ "develop" ]
+jobs:
+  dbt-ci:
+    name: dbt CI Pipeline
+    uses: ./.github/workflows/dbt-ci.yml
+    with:
+      environment: dev
+      full_refresh: false
+      perform_onetime_seeding: false
+
+      dbt_profile_target: dev
+      dbt_snowflake_role: ACCOUNTADMIN
+      dbt_snowflake_warehouse: COMPUTE_WH
+      dbt_snowflake_database: DW_DEV_INGEST
+      dbt_snowflake_schema: PUBLIC
+
+    secrets:
+      dbt_snowflake_account: ${{ secrets.DBT_SNOWFLAKE_ACCOUNT }}
+      dbt_snowflake_user: ${{ secrets.DBT_SNOWFLAKE_USER }}
+      dbt_snowflake_password: ${{ secrets.DBT_SNOWFLAKE_PASSWORD }}
+
+      checkout_token: ${{ secrets.WORKFLOW_TOKEN }} #github Personal Access Token
+
+      # autodbt_repo_private_key: ${{ secrets.AUTODBT_REPO_PRIVATE_KEY }}
+      # autodbt_google_service_account_credentials: ${{ secrets.AUTODBT_GOOGLE_SERVICE_ACCOUNT_CREDENTIALS }}
+      # slack_webhook_url: ${{ secrets.SLACK_WEBHOOK_URL }}
