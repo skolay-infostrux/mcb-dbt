@@ -1,0 +1,106 @@
+name: _template dbt Deployment Pipeline
+on:
+  workflow_call:
+    inputs:
+      environment:
+        required: true
+        default: 'dev'
+        type: string
+      dbt_profile_target:
+        required: true
+        type: string
+      full_refresh:
+        required: false
+        default: false
+        type: boolean
+
+      dbt_snowflake_role:
+        required: true
+        type: string
+      dbt_snowflake_warehouse:
+        required: true
+        type: string
+      dbt_snowflake_database:
+        required: true
+        type: string
+      dbt_snowflake_schema:
+        required: true
+        default: PUBLIC
+        type: string
+
+      python_version:
+        required: false
+        default: '3.10.4'
+        type: string
+
+    secrets:
+      dbt_snowflake_account:
+        required: true
+      dbt_snowflake_user:
+        required: true
+      dbt_snowflake_password:
+        required: true
+
+jobs:
+  dbt-deploy:
+    name: 'Deploy / ${{ inputs.environment }}'
+    runs-on: ubuntu-latest
+    env:
+      DBT_SNOWFLAKE_ACCOUNT: ${{ secrets.dbt_snowflake_account }}
+      DBT_SNOWFLAKE_USER: ${{ secrets.dbt_snowflake_user }}
+      DBT_SNOWFLAKE_PASSWORD: ${{ secrets.dbt_snowflake_password }}
+      DBT_SNOWFLAKE_ROLE: ${{ inputs.dbt_snowflake_role }}
+      DBT_SNOWFLAKE_WAREHOUSE: ${{ inputs.dbt_snowflake_warehouse }}
+      DBT_SNOWFLAKE_DATABASE: ${{ inputs.dbt_snowflake_database }}
+      DBT_SNOWFLAKE_SCHEMA: ${{ inputs.dbt_snowflake_schema }}
+      DBT_PROFILES_DIR: ${{ github.workspace }}
+      SKIP: "no-commit-to-branch"
+    steps:
+      - uses: actions/checkout@v3
+
+      # >>>> Python env
+      - name: Setup Python ${{ inputs.python_version }}
+        uses: actions/setup-python@v3
+        with:
+          python-version: ${{ inputs.python_version }}
+
+      - name: Cache Python Dependencies
+        id: pip-cache
+        uses: actions/cache@v3
+        with:
+          path: ~/.cache/pip
+          key: ${{ runner.os }}-pip-${{ hashFiles('**/requirements.txt') }}
+          restore-keys: |
+            ${{ runner.os }}-pip-
+
+      - name: Install Python Dependencies
+        run: |
+          python -m pip install --upgrade pip
+          [ -f requirements.txt ] && pip install -r requirements.txt
+      # <<<< Python env
+
+
+      - name: Pull in dbt Dependencies
+        run: |
+          dbt deps
+
+      - name: Test dbt Snowflake Connection
+        run: |
+          dbt debug --target ${{ inputs.dbt_profile_target }}
+
+      # 'dbt build' does seed+run+test
+      # we want only run+test >>> exclude CSV files in the 'seed' folder
+      - name: Build
+        if: ${{ !inputs.full_refresh }}
+        run: |
+          dbt build $DBT_FLAGS --fail-fast --target ${{ inputs.dbt_profile_target }} --exclude seeds/*.csv seeds/*/*.csv
+      - name: Build (Full Refresh)
+        if: ${{ inputs.full_refresh }}
+        run: |
+          dbt build $DBT_FLAGS --full-refresh --fail-fast --target ${{ inputs.dbt_profile_target }} --exclude seeds/*.csv seeds/*/*.csv
+
+      - name: Upload dbt Artifacts
+        uses: actions/upload-artifact@v3
+        with:
+          name: dbt-artifacts
+          path: target/*.json
