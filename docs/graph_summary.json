@@ -1,0 +1,1 @@
+{"_invocation_id": "bb6ae1e5-0ce3-4d15-8465-79d241cb0270", "linked": {"0": {"name": "model.mcb_dbt.sample_model", "type": "model"}, "1": {"name": "operation.dbt_constraints.dbt_constraints-on-run-end-0", "type": "operation"}}}
