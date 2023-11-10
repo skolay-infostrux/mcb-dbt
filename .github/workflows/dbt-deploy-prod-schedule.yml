@@ -1,0 +1,23 @@
+name: PROD Scheduled Deployment
+on:
+  schedule:
+    - cron: '45 09 * * *' # Runs everyday at 5:45 AM ET.
+
+jobs:
+  dbt-deploy:
+    name: 'Manual dbt Deployment Pipeline - prod'
+    uses: ./.github/workflows/dbt-deploy.yml
+    with:
+      environment: prod
+      full_refresh: false
+
+      dbt_profile_target: prod
+      dbt_snowflake_role: SYSADMIN
+      dbt_snowflake_warehouse: PROD_DBT_WH
+      dbt_snowflake_database: DW_PROD_CLEAN
+      dbt_snowflake_schema: PUBLIC
+
+    secrets:
+      dbt_snowflake_account: ${{ secrets.DBT_SNOWFLAKE_ACCOUNT }}
+      dbt_snowflake_user: ${{ secrets.DBT_SNOWFLAKE_USER }}
+      dbt_snowflake_password: ${{ secrets.DBT_SNOWFLAKE_PASSWORD }}
