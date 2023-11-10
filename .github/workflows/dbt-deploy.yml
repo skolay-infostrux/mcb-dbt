@@ -35,11 +35,11 @@ on:
 
     secrets:
       dbt_snowflake_account:
-        required: false
+        required: true
       dbt_snowflake_user:
-        required: false
+        required: true
       dbt_snowflake_password:
-        required: false
+        required: true
 
 jobs:
   dbt-deploy:
