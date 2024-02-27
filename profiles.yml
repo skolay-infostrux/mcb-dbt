@@ -1,6 +1,7 @@
 config:
   send_anonymous_usage_stats: false
-  fail_fast: false
+  fail_fast: true
+  use_colors: false
 
 ### this file only used by dbt CLI (not used by dbt Cloud)
 default:

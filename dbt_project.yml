@@ -47,7 +47,17 @@ require-dbt-version: ">=1.5.0"
 #-----------------------------
 vars:
  project_database_prefix: 'dw'
- tfr_date: '2023-05-24'
+ business_date_adjuster: "{{ env_var('DBT_BUSINESS_DATE_ADJUSTER', '0') }}"
+ 
+ # Processors
+ v_processors: ['BUCKZY','CASCADE','CORECARD','EQUALS','FICENTIVE','FIRSTVIEW','FISBAMBU','FISS','GALILEO','I2C','REVOLUT','THUNES','B4B']
+ v_non_compliant_processors: ['GALILEO','CORECARD']
+ v_compliant_processors: ['BUCKZY','CASCADE','EQUALS','FICENTIVE','FIRSTVIEW','FISBAMBU','FISS','I2C','REVOLUT','THUNES','B4B']
+ 
+ # Azure resources
+ v_azure_integration: "{{ target.name }}_azure_int"
+ v_azure_blob: "{{ env_var('DBT_AZURE_SA_URL', '') }}"
+ 
 
 # Database names have form '<project_database_prefix>_<target.name>_<stage of processing>', for example, 'dw_dev_clean'
  database_list: ['ingest', 'clean', 'normalize', 'integrate', 'analyze', 'egest', 'report']
@@ -58,9 +68,8 @@ tests:
   +store_failures: true
   +limit: 100
   +severity: error
-  +database: "dw_{{ target.name }}_ingest"
-  +schema: 'dbt_test_results'
-
+  +database: "dw_{{ target.name }}_log"
+  +schema: "{{ env_var('DBT_SNOWFLAKE_SCHEMA_PREFIX', '') }}dbt_test_results"
 
 models:
   +transient: true # create tables as TRANSIENT or PERMANENT (default if missing is 'transient: true')
@@ -95,4 +104,61 @@ models:
     report:
       +database: "report"
 
+    log:
+      +database: "log"
+
 seeds:
+  mcb_dbt:
+
+    common_dim:
+      date_dim:
+         +enabled: true
+         +full_refresh: true
+         +database: "analyze"
+         +schema: common_dim
+      product_dim:
+         +enabled: true
+         +full_refresh: true
+         +database: "analyze"
+         +schema: common_dim
+      program_dim:
+         +enabled: true
+         +full_refresh: true
+         +database: "analyze"
+         +schema: common_dim
+
+on-run-start: 
+  - "{% if execute %} {#only on Execute step, not on parse #} 
+      {% do create_log_objects() %}
+      
+      {% set project_info_dict = get_project_info_dict() %} 
+      {{ log_custom('>>>>START dbt ' ~ invocation_args_dict.which ~ '\n' ~ toyaml(project_info_dict)) }} 
+    {% endif %}"
+
+
+  - "{% if flags.WHICH in ('run', 'build') %}
+      {% do create_schema_ingest() %}
+      {% do create_ext_stage() %}
+
+      {% do create_file_format_ncompliant() %}
+      {% do create_table_raw_ncompliant() %}
+
+      {% do create_file_format_compliant() %}
+      {% do create_table_raw_compliant() %}
+ 
+    {% endif %}"
+
+
+on-run-end: "
+{% if (execute or 'run-operation'==invocation_args_dict.which) and invocation_args_dict.which != 'compile' %}
+      {% set run_results_info_dict = get_run_info_dict(results) %}
+
+      insert into 
+        dw_{{ target.name }}_log.{{ env_var('DBT_SNOWFLAKE_SCHEMA_PREFIX', '') }}dbt_run_results.run_results($1)
+        select parse_json($${{ tojson(run_results_info_dict) }}$$);
+
+{% endif %}
+"
+
+  
+
