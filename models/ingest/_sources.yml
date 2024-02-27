@@ -1,0 +1,143 @@
+version: 2
+
+sources:
+  - name: raw_data_buckzy
+    database: "{{ var('project_database_prefix') }}_{{ target.name }}_INGEST"
+    schema: "{{ env_var('DBT_SNOWFLAKE_SCHEMA_PREFIX', '') }}BUCKZY"
+    tables:
+      - name: raw_account
+      - name: raw_customer
+      - name: raw_balance
+      - name: raw_transaction
+      - name: raw_lookup
+      - name: raw_recon
+
+  - name: raw_data_cascade
+    database: "{{ var('project_database_prefix') }}_{{ target.name }}_INGEST"
+    schema: "{{ env_var('DBT_SNOWFLAKE_SCHEMA_PREFIX', '') }}CASCADE"
+    tables:
+      - name: raw_account
+      - name: raw_customer
+      - name: raw_balance
+      - name: raw_transaction
+      - name: raw_lookup
+      - name: raw_recon
+
+  - name: raw_data_corecard
+    database: "{{ var('project_database_prefix') }}_{{ target.name }}_INGEST"
+    schema: "{{ env_var('DBT_SNOWFLAKE_SCHEMA_PREFIX', '') }}CORECARD"
+    tables:
+      - name: raw_account
+      - name: raw_customer
+      - name: raw_customer_mf
+      - name: raw_balance
+      - name: raw_transaction 
+
+  - name: raw_data_equals
+    database: "{{ var('project_database_prefix') }}_{{ target.name }}_INGEST"
+    schema: "{{ env_var('DBT_SNOWFLAKE_SCHEMA_PREFIX', '') }}EQUALS"
+    tables:
+      - name: raw_account
+      - name: raw_customer
+      - name: raw_balance
+      - name: raw_transaction
+      - name: raw_lookup
+      - name: raw_recon 
+
+  - name: raw_data_ficentive
+    database: "{{ var('project_database_prefix') }}_{{ target.name }}_INGEST"
+    schema: "{{ env_var('DBT_SNOWFLAKE_SCHEMA_PREFIX', '') }}FICENTIVE"
+    tables:
+      - name: raw_account
+      - name: raw_customer
+      - name: raw_balance
+      - name: raw_transaction
+      - name: raw_lookup
+      - name: raw_recon
+
+  - name: raw_data_firstview
+    database: "{{ var('project_database_prefix') }}_{{ target.name }}_INGEST"
+    schema: "{{ env_var('DBT_SNOWFLAKE_SCHEMA_PREFIX', '') }}FIRSTVIEW"
+    tables:
+      - name: raw_account
+      - name: raw_customer
+      - name: raw_balance
+      - name: raw_transaction
+      - name: raw_lookup
+      - name: raw_recon
+
+  - name: raw_data_fisbambu
+    database: "{{ var('project_database_prefix') }}_{{ target.name }}_INGEST"
+    schema: "{{ env_var('DBT_SNOWFLAKE_SCHEMA_PREFIX', '') }}FISBAMBU"
+    tables:
+      - name: raw_account
+      - name: raw_customer
+      - name: raw_balance
+      - name: raw_transaction
+      - name: raw_lookup
+      - name: raw_recon
+
+  - name: raw_data_fiss
+    database: "{{ var('project_database_prefix') }}_{{ target.name }}_INGEST"
+    schema: "{{ env_var('DBT_SNOWFLAKE_SCHEMA_PREFIX', '') }}FISS"
+    tables:
+      - name: raw_account
+      - name: raw_customer
+      - name: raw_balance
+      - name: raw_transaction
+      - name: raw_lookup
+      - name: raw_recon
+
+  - name: raw_data_galileo
+    database: "{{ var('project_database_prefix') }}_{{ target.name }}_INGEST"
+    schema: "{{ env_var('DBT_SNOWFLAKE_SCHEMA_PREFIX', '') }}GALILEO"
+    tables:
+      - name: raw_account
+      - name: raw_customer
+      - name: raw_balance
+      - name: raw_transaction 
+
+  - name: raw_data_i2c
+    database: "{{ var('project_database_prefix') }}_{{ target.name }}_INGEST"
+    schema: "{{ env_var('DBT_SNOWFLAKE_SCHEMA_PREFIX', '') }}I2C"
+    tables:
+      - name: raw_account
+      - name: raw_customer
+      - name: raw_balance
+      - name: raw_transaction
+      - name: raw_lookup
+      - name: raw_recon
+
+  - name: raw_data_revolut
+    database: "{{ var('project_database_prefix') }}_{{ target.name }}_INGEST"
+    schema: "{{ env_var('DBT_SNOWFLAKE_SCHEMA_PREFIX', '') }}REVOLUT"
+    tables:
+      - name: raw_account
+      - name: raw_customer
+      - name: raw_balance
+      - name: raw_transaction
+      - name: raw_lookup
+      - name: raw_recon
+
+  - name: raw_data_thunes
+    database: "{{ var('project_database_prefix') }}_{{ target.name }}_INGEST"
+    schema: "{{ env_var('DBT_SNOWFLAKE_SCHEMA_PREFIX', '') }}THUNES"
+    tables:
+      - name: raw_account
+      - name: raw_customer
+      - name: raw_balance
+      - name: raw_transaction
+      - name: raw_lookup
+      - name: raw_recon
+
+  - name: raw_data_b4b
+    database: "{{ var('project_database_prefix') }}_{{ target.name }}_INGEST"
+    schema: "{{ env_var('DBT_SNOWFLAKE_SCHEMA_PREFIX', '') }}B4B"
+    tables:
+      - name: raw_account
+      - name: raw_customer
+      - name: raw_balance
+      - name: raw_transaction
+      - name: raw_lookup
+      - name: raw_recon
+      
