@@ -1,0 +1,14 @@
+version: 2
+
+models:
+  - name: prepaid__normalize_balance  
+    columns:         
+      - name: CUST_ACCOUNT_ID      
+      - name: ACCOUNT_NUMBER                    
+      - name: CURRENT_BALANCE      
+      - name: CURRENT_BALANCE_DATE                                       
+      - name: AVAILABLE_BALANCE  
+      - name: NEGATIVE_BALANCE_DATE
+      - name: NEGATIVE_BALANCE_FEE
+      - name: CURRENCY  
+      - name: PAYMENT_PROCESSOR

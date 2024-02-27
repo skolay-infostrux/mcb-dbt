@@ -1,0 +1,10 @@
+version: 2
+
+models:
+  - name: prepaid__normalize_lookup
+    columns:      
+      - name: FILE_TYPE	                 
+      - name: FIELD_NAME			             
+      - name: CODE	
+      - name: DESCRIPTION
+      - name: PAYMENT_PROCESSOR

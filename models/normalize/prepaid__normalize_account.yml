@@ -1,0 +1,23 @@
+version: 2
+
+models:
+  - name: prepaid__normalize_account
+    columns: 
+      - name: CUST_ACCOUNT_ID                
+      - name: ACCOUNT_NUMBER                  
+      - name: ACCOUNT_EXPIRATION_DATE      
+      - name: ACCOUNT_STATUS                   
+      - name: ACCOUNT_CREATED_DATE                                 
+      - name: LAST_UPDATED_DATE                                                    
+      - name: PRN                                            
+      - name: PSEUDO_DDA                                 
+      - name: GROUP_ID                              
+      - name: PRODUCT_ID                          
+      - name: PROGRAM_ID                          
+      - name: RELOADABLE_INDICATOR                    
+      - name: TYPE_OF_ACCOUNT                              
+      - name: SURROGATE_PROXY_TOKEN_UNIQUE_ID
+      - name: CARD_ID                                
+      - name: TYPE_OF_CARD                        
+      - name: LAST_TRANSACTION_DATE 
+      - name: PAYMENT_PROCESSOR

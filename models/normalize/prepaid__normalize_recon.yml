@@ -1,0 +1,9 @@
+version: 2
+
+models:
+  - name: prepaid__normalize_recon  
+    columns:     
+      - name: CUST_ACCOUNT_ID	                 
+      - name: ACCOUNT_NUMBER			             
+      - name: TRANSACTION_ID
+      - name: PAYMENT_PROCESSOR
